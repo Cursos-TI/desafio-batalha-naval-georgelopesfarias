@@ -1,104 +1,107 @@
 #include <stdio.h>
 
 #define TAM 10
-#define TAM_NAVIO 3
+#define H 5   // tamanho das matrizes de habilidade (5x5)
 
 int main() {
 
-    // ===============================
-    // 1. DECLARAÇÃO DO TABULEIRO
-    // ===============================
-
     int tabuleiro[TAM][TAM];
 
-    // Inicializa com água (0)
-    for (int linha = 0; linha < TAM; linha++) {
-        for (int coluna = 0; coluna < TAM; coluna++) {
-            tabuleiro[linha][coluna] = 0;
+    // ===============================
+    // 1. INICIALIZA TABULEIRO
+    // ===============================
+    for (int i = 0; i < TAM; i++) {
+        for (int j = 0; j < TAM; j++) {
+            tabuleiro[i][j] = 0; // água
         }
     }
 
     // ===============================
-    // 2. POSICIONAMENTO DOS NAVIOS
+    // 2. POSICIONA NAVIOS FIXOS
+    // ===============================
+    for (int i = 0; i < 3; i++) {
+        tabuleiro[2][3 + i] = 3; // horizontal
+        tabuleiro[5 + i][7] = 3; // vertical
+    }
+
+    // ===============================
+    // 3. MATRIZES DE HABILIDADES
     // ===============================
 
-    // Navio 1 - Horizontal
-    int linhaH = 1, colunaH = 2;
-    if (colunaH + TAM_NAVIO <= TAM) {
-        int sobreposicao = 0;
+    int cone[H][H];
+    int cruz[H][H];
+    int octaedro[H][H];
 
-        for (int i = 0; i < TAM_NAVIO; i++) {
-            if (tabuleiro[linhaH][colunaH + i] != 0)
-                sobreposicao = 1;
-        }
+    int centro = H / 2;
 
-        if (!sobreposicao) {
-            for (int i = 0; i < TAM_NAVIO; i++) {
-                tabuleiro[linhaH][colunaH + i] = 3;
-            }
-        }
-    }
-
-    // Navio 2 - Vertical
-    int linhaV = 4, colunaV = 6;
-    if (linhaV + TAM_NAVIO <= TAM) {
-        int sobreposicao = 0;
-
-        for (int i = 0; i < TAM_NAVIO; i++) {
-            if (tabuleiro[linhaV + i][colunaV] != 0)
-                sobreposicao = 1;
-        }
-
-        if (!sobreposicao) {
-            for (int i = 0; i < TAM_NAVIO; i++) {
-                tabuleiro[linhaV + i][colunaV] = 3;
-            }
+    // ----- CONE (expandindo para baixo) -----
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < H; j++) {
+            if (j >= centro - i && j <= centro + i)
+                cone[i][j] = 1;
+            else
+                cone[i][j] = 0;
         }
     }
 
-    // Navio 3 - Diagonal principal (↘)
-    int linhaD1 = 0, colunaD1 = 0;
-    if (linhaD1 + TAM_NAVIO <= TAM && colunaD1 + TAM_NAVIO <= TAM) {
-        int sobreposicao = 0;
-
-        for (int i = 0; i < TAM_NAVIO; i++) {
-            if (tabuleiro[linhaD1 + i][colunaD1 + i] != 0)
-                sobreposicao = 1;
-        }
-
-        if (!sobreposicao) {
-            for (int i = 0; i < TAM_NAVIO; i++) {
-                tabuleiro[linhaD1 + i][colunaD1 + i] = 3;
-            }
+    // ----- CRUZ -----
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < H; j++) {
+            if (i == centro || j == centro)
+                cruz[i][j] = 1;
+            else
+                cruz[i][j] = 0;
         }
     }
 
-    // Navio 4 - Diagonal secundária (↙)
-    int linhaD2 = 0, colunaD2 = 9;
-    if (linhaD2 + TAM_NAVIO <= TAM && colunaD2 - (TAM_NAVIO - 1) >= 0) {
-        int sobreposicao = 0;
-
-        for (int i = 0; i < TAM_NAVIO; i++) {
-            if (tabuleiro[linhaD2 + i][colunaD2 - i] != 0)
-                sobreposicao = 1;
-        }
-
-        if (!sobreposicao) {
-            for (int i = 0; i < TAM_NAVIO; i++) {
-                tabuleiro[linhaD2 + i][colunaD2 - i] = 3;
-            }
+    // ----- OCTAEDRO (LOSANGO) -----
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < H; j++) {
+            if (abs(i - centro) + abs(j - centro) <= centro)
+                octaedro[i][j] = 1;
+            else
+                octaedro[i][j] = 0;
         }
     }
 
     // ===============================
-    // 3. EXIBIÇÃO DO TABULEIRO
+    // 4. SOBREPOSIÇÃO DAS HABILIDADES
     // ===============================
 
-    printf("\n===== TABULEIRO BATALHA NAVAL =====\n\n");
+    int origemLinha = 6;
+    int origemColuna = 4;
 
-    for (int linha = 0; linha < TAM; linha++) {
-        for (int coluna = 0; coluna < TAM; coluna++) {
-            printf("%d ", tabuleiro[linha][coluna]);
+    // Função de sobreposição simplificada (aplicando cone)
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < H; j++) {
+
+            int linhaTab = origemLinha - centro + i;
+            int colunaTab = origemColuna - centro + j;
+
+            if (linhaTab >= 0 && linhaTab < TAM &&
+                colunaTab >= 0 && colunaTab < TAM) {
+
+                if (cone[i][j] == 1 && tabuleiro[linhaTab][colunaTab] == 0)
+                    tabuleiro[linhaTab][colunaTab] = 5;
+            }
+        }
+    }
+
+    // ===============================
+    // 5. EXIBIÇÃO DO TABULEIRO
+    // ===============================
+
+    printf("\n===== BATALHA NAVAL - HABILIDADES =====\n\n");
+
+    for (int i = 0; i < TAM; i++) {
+        for (int j = 0; j < TAM; j++) {
+
+            if (tabuleiro[i][j] == 0)
+                printf("~ ");
+            else if (tabuleiro[i][j] == 3)
+                printf("N ");
+            else if (tabuleiro[i][j] == 5)
+                printf("* ");
         }
         printf("\n");
     }
